@@ -3,27 +3,87 @@
 
 Portal.configure do |config|
   config.name = "rubydev"
+  config.hostname = "rubydev"
 
   config.os :debian do |os|
     os.release = "bullseye"
 
     os.add_user :user do |user|
-      user.authorized_keys = ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"]
-      user.groups = "kvm"
+      user.authorized_keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"
+      ]
+      user.groups = ["kvm"]
+
+      user.dotconfigs do |dot|
+        dot.bashrc do |bashrc|
+          bash.alias("vim", "nvim")
+          bash.alias("ls", "ls -lah")
+          bash.env("GOPATH", "/home/user/go")
+        end
+        dot.gitconfig do |git| 
+          git.name = "Your Name"
+          git.email = "you@example.com"
+        end
+      end
     end
 
     os.add_user :cool do |user|
-      user.authorized_keys = ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"]
-      user.groups = "kvm"
+      user.authorized_keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"
+      ]
+      user.groups = ["kvm"]
     end
 
     os.package_manager do |pm|
       pm.install = ["vim", "nvim"]
       pm.remove = ["nano"]
+      pm.config.append('APT::Get::Install-Recommends "false";')
+      pm.config.append('APT::Get::Install-Suggests   "false";')
+      pm.repositories do |repositories|
+        repositories.main = [
+          "deb http://ftp.no.debian.org/debian/ bullseye main", 
+          "deb-src http://ftp.no.debian.org/debian/ bullseye main"
+        ]
+        repositories.security = [
+          "deb http://ftp.no.debian.org/debian-security buster/updates main",
+          "deb-src http://ftp.no.debian.org/debian-security buster/updates main"
+        ]
+        repositories.updates = [
+          "deb http://ftp.no.debian.org/debian/ buster-updates main",
+          "deb-src http://ftp.no.debian.org/debian/ buster-updates main"
+        ]
+      end
+    end
+
+    os.filesystem do |fs|
+      fs.rm("/home/user/Downloads")
+      fs.rm("/home/user/Public")
+      fs.rm("/home/user/Templates")
+      fs.rm("/home/user/Pictures")
+      fs.rm("/home/user/Documents")
+      fs.rm("/home/user/Videos")
+      fs.rm("/home/user/Music")
+      fs.ln("/media/user/Downloads", "/home/user/Downloads")
+      fs.mkdir("/home/user/go")
+
+      fs.etc do |etc|
+        etc.resolvconf.append("nameserver 212.82.226.212")
+        etc.resolvconf.append("nameserver 8.8.4.4")
+        etc.issue.overwrite("Multiverse OS Application VM")
+        etc.motd.overwrite("[Multiverse OS]")
+        etc.sysctl.append("net.ipv4.conf.all.send_redirects = 0")
+        etc.crontab.append("25 6 * * * root test -x do something")
+        etc.fstab.append("Downloads /media/user/Downloads 9p trans=virtio,9p2000.L,rw,cache=none,nofail 0 0")
+      end
     end
 
     os.kernel do |k| 
       k.modules = ["p9", "p9net", "p9net_virtio"]
+    end
+
+    os.install_configs do |config|
+      config.repository = "github.com/multiverse-os/provisioning/app"
+      config.install("/etc/hosts", "/etc/hosts")
     end
 
     os.add_network :virbr0 do |net|
