@@ -87,18 +87,25 @@ Portal.configure do |config|
       user.authorized_keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"
       ]
-      user.groups = ["kvm"]
+      user.groups = ["kvm"] 
       user.dot_configs do |dot|
         dot.edit :bashrc do |config|
           config.append("alias vim='nvim'")
           config.append("alias ls='ls -lah'")
           config.append("export GOPATH='/home/user/go'")
         end
-        dot.edit :gitconfig do |git| 
-          git.name = "Your Name"
-          git.email = "you@example.com"
+        dot.edit :gitconfig do |config| 
+          config.name = "Your Name"
+          config.email = "you@example.com"
+        end
+        dot.edit :vimrc do |config|
+          config.append('" Test comment')
         end
       end
+    end
+
+    os.shell "/bin/bash" do |sh|
+      sh.run("echo 'hi'")
     end
 
     os.add_user :cool do |user|
@@ -183,10 +190,10 @@ Portal.configure do |config|
       kernel.paremeters = "quiet nomodeset"
     end
 
-    os.install_profile :default do |config|
-      config.repository = "github.com/multiverse-os/provisioning/app"
-      config.cp("#{repository}/etc/hosts", "/etc/hosts")
-
+    os.install_profile :default do |profile|
+      profile.repository = "github.com/multiverse-os/provisioning/app"
+      profile.install("/etc/hosts")
+      profile.install("/etc/ssh/sshd")
     end
   end
 
