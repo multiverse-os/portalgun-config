@@ -4,23 +4,70 @@
 Portal.configure do |config|
   config.name = "rubydev"
   config.hostname = "rubydev"
+  config.category = "multiverse"
+  config.subcategory = "app"
+  config.ephemeral = true
+
+  config.cpus = 4 
+  config.ram = 4096
+  config.pinned_cpus = [1,3,5] 
+  config.emulator = :qemu  
+  config.arch = :x86_64
+  config.chipset = :i440FX
+  config.bios = :OVMF
+  config.boot_order = [:vault] 
+  config.add_device :sound do |device|
+    device.model = "ICH9"
+  end
+  config.add_device :input do |device|
+    device.input_type = "tablet"
+  end 
+  config.add_device :rng 
+
+
+  config.spice do |spice|
+    spice.address = "0.0.0.0"
+    spice.port = 5900
+    spice.tls = true
+    spice.password = "test"
+    spice.keymap = "en-us"
+  end
+
+  config.add_disk :vault do |disk|
+    disk.size = 1024
+    disk.read_only = false
+    disk.serial = "x"
+    disk.format = :ext4
+    disk.bus = :virtio
+    disk.cache = :none
+    disk.io_mode = :native
+    disk.discard = :ignore
+    disk.detect_zeroes = :off
+    disk.image = :qcow2
+  end 
+
+  config.ssh do |ssh|
+    ssh.keys_only = true
+    ssh.root_login = false 
+    ssh.port = 22 
+    ssh.keep_alive = true
+  end
 
   config.os :debian do |os|
-    os.release = "bullseye"
+    os.release = :bullseye
 
     os.add_user :user do |user|
       user.authorized_keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"
       ]
       user.groups = ["kvm"]
-
-      user.dotconfigs do |dot|
-        dot.bashrc do |bashrc|
-          bash.alias("vim", "nvim")
-          bash.alias("ls", "ls -lah")
-          bash.env("GOPATH", "/home/user/go")
+      user.dot_configs do |dot|
+        dot.edit :bashrc do |config|
+          config.append("alias vim='nvim'")
+          config.append("alias ls='ls -lah'")
+          config.append("export GOPATH='/home/user/go'")
         end
-        dot.gitconfig do |git| 
+        dot.edit :gitconfig do |git| 
           git.name = "Your Name"
           git.email = "you@example.com"
         end
@@ -67,13 +114,30 @@ Portal.configure do |config|
       fs.mkdir("/home/user/go")
 
       fs.etc do |etc|
-        etc.resolvconf.append("nameserver 212.82.226.212")
-        etc.resolvconf.append("nameserver 8.8.4.4")
-        etc.issue.overwrite("Multiverse OS Application VM")
-        etc.motd.overwrite("[Multiverse OS]")
-        etc.sysctl.append("net.ipv4.conf.all.send_redirects = 0")
-        etc.crontab.append("25 6 * * * root test -x do something")
-        etc.fstab.append("Downloads /media/user/Downloads 9p trans=virtio,9p2000.L,rw,cache=none,nofail 0 0")
+        etc.edit :resolvconf do |config|
+          config.append("nameserver 212.82.226.212")
+          config.append("nameserver 8.8.4.4")
+        end
+        
+        etc.edit :issue do |config|
+          config.overwrite("Multiverse OS App VM")
+        end
+
+        etc.edit :motd do |config|
+          config.overwrite("[Debian 10 GNU/Linux]")
+        end
+
+        etc.edit :sysctl do |config|
+          config.append("net.ipv4.conf.all.send_redirects = 0")
+        end
+
+        etc.edit :crontab do |config|
+          config.append("25 6 * * * root test -x do something")
+        end
+
+        etc.edit :fstab do |config| 
+          config.append("Downloads /media/user/Downloads 9p trans=virtio,9p2000.L,rw,cache=none,nofail 0 0")
+        end
       end
     end
 
@@ -89,7 +153,8 @@ Portal.configure do |config|
     os.add_network :virbr0 do |net|
       net.add_device :ens0 do |dev|
         dev.version = 4
-        dev.mode = :static
+        dev.mode = :static 
+        dev.model = :virtio
         dev.address = "10.200.200.125"
         dev.dns = "8.8.4.4"
         dev.mac = "00:00:10:20:20:24"
