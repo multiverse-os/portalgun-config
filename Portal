@@ -14,12 +14,12 @@ Portal.configure do |config|
     vm.pinned_cpus = [1,3,5] 
     vm.emulator = :qemu  
     vm.arch = :x86_64
-    vm.chipset = :i440FX
-    vm.bios = :OVMF
+    vm.chipset = :i440fx
+    vm.bios = :ovmf
     vm.boot_order = [:vault] 
 
     vm.add_device :sound do |device|
-      device.model = :ICH9
+      device.model = :ich9
     end
     vm.add_device :input do |device|
       device.input_type = :tablet
@@ -38,17 +38,21 @@ Portal.configure do |config|
       disk.size = 1024
       disk.read_only = false
       disk.serial = "x"
-      disk.format = :ext4
+      disk.filesystem = :ext4
       disk.bus = :virtio
       disk.cache = :none
       disk.io_mode = :native
       disk.discard = :ignore
       disk.detect_zeroes = :off
-      disk.image = :qcow2 
+      disk.image_format = :qcow2
+      disk.add_encryption :luks do |encryption|
+        encryption.keys = ["path/to/key", "path/2/second/key"]
+      end
       disk.add_layer :base do |layer|
         layer.read_only = true
         layer.size = 256 
-      end
+      end 
+    end 
 
     vm.add_network :virbr0 do |net| 
       net.ports do |port|
@@ -105,8 +109,14 @@ Portal.configure do |config|
     end
 
     os.package_manager do |pm|
-      pm.install = ["vim", "nvim"]
-      pm.remove = ["nano"]
+      pm.install = ["vim", "neovim", "curl", "wget", "git", "openssh-server", "tor"]
+      pm.remove = [
+        "nano", "apache-bin", "baobab", "bluez", "bluez-obexd", "brasero-cdrkit",
+        "brasero-common", "bubblewrap", "calf-plugins", "cdrdao", "crda", "cheese-common",
+        "cups-pk-helper", "cracklib-runtime", "dvdauthor", "dh-python", "docbook-xml",
+        "debian-faq", "emacsen-common", "enchant", "flac", "genisoimage", "gnome-sushi",
+        "ghostscript", "javascript-common", "lame", "poppler-data", "samba-libs", "telnet",
+        "wireless-regdb", "wpasupplicant", "zietgeist-core"]
       pm.config.append('APT::Get::Install-Recommends "false";')
       pm.config.append('APT::Get::Install-Suggests   "false";')
       pm.repositories do |repositories|
@@ -140,7 +150,7 @@ Portal.configure do |config|
       fs.ln("/media/user/Downloads", "/home/user/Downloads")
       fs.mkdir("/home/user/go")
 
-      fs.etc do |etc|
+      fs.path :etc do |etc|
         etc.edit :resolvconf do |config|
           config.append("nameserver 212.82.226.212")
           config.append("nameserver 8.8.4.4")
@@ -168,13 +178,15 @@ Portal.configure do |config|
       end
     end
 
-    os.kernel do |k| 
-      k.modules = ["p9", "p9net", "p9net_virtio"]
+    os.kernel do |kernel| 
+      kernel.modules = ["p9", "p9net", "p9net_virtio"]
+      kernel.paremeters = "quiet nomodeset"
     end
 
-    os.install_configs do |config|
+    os.install_profile :default do |config|
       config.repository = "github.com/multiverse-os/provisioning/app"
-      config.install("/etc/hosts", "/etc/hosts")
+      config.cp("#{repository}/etc/hosts", "/etc/hosts")
+
     end
   end
 
