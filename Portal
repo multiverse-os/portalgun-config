@@ -4,7 +4,7 @@
 Portal.configure do |config|
 
   config.host :firefox do |vm|
-    vm.hostname = "rubydev"
+    vm.hostname = :go_research
     vm.category = :multiverse
     vm.subcategory = :app
     vm.ephemeral = true
@@ -27,6 +27,7 @@ Portal.configure do |config|
 
     vm.spice do |spice|
       spice.address = "0.0.0.0"
+      spice.allow = ["10.200.200.21"]
       spice.port = 5900
       spice.tls = true
       spice.password = "test"
@@ -65,6 +66,7 @@ Portal.configure do |config|
         ssh.keys_only = true
         ssh.root_login = false 
         ssh.port = 22 
+        ssh.allow = ["10.200.200.21"]
         ssh.keep_alive = true
       end
 
@@ -86,6 +88,9 @@ Portal.configure do |config|
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"
         ]
         user.groups = ["kvm"] 
+        user.editor = "nvim"
+        user.shell = "/bin/bash"
+        user.language = "en_US.UTF-8"
         user.dot_configs do |dot|
           dot.edit :bashrc do |config|
             config.append("alias vim='nvim'")
@@ -142,6 +147,7 @@ Portal.configure do |config|
 
       os.services do |service|
         service.enable("ssh")
+        service.enable("tor")
       end
 
       os.filesystem do |fs|
