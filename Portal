@@ -8,49 +8,72 @@ Portal.configure do |config|
   config.subcategory = "app"
   config.ephemeral = true
 
-  config.cpus = 4 
-  config.ram = 4096
-  config.pinned_cpus = [1,3,5] 
-  config.emulator = :qemu  
-  config.arch = :x86_64
-  config.chipset = :i440FX
-  config.bios = :OVMF
-  config.boot_order = [:vault] 
-  config.add_device :sound do |device|
-    device.model = "ICH9"
-  end
-  config.add_device :input do |device|
-    device.input_type = "tablet"
-  end 
-  config.add_device :rng 
+  config.host do |vm|
+    vm.cpus = 4 
+    vm.ram = 4096
+    vm.pinned_cpus = [1,3,5] 
+    vm.emulator = :qemu  
+    vm.arch = :x86_64
+    vm.chipset = :i440FX
+    vm.bios = :OVMF
+    vm.boot_order = [:vault] 
 
+    vm.add_device :sound do |device|
+      device.model = :ICH9
+    end
+    vm.add_device :input do |device|
+      device.input_type = :tablet
+    end 
+    vm.add_device :rng 
 
-  config.spice do |spice|
-    spice.address = "0.0.0.0"
-    spice.port = 5900
-    spice.tls = true
-    spice.password = "test"
-    spice.keymap = "en-us"
-  end
+    vm.spice do |spice|
+      spice.address = "0.0.0.0"
+      spice.port = 5900
+      spice.tls = true
+      spice.password = "test"
+      spice.keymap = "en-us"
+    end
 
-  config.add_disk :vault do |disk|
-    disk.size = 1024
-    disk.read_only = false
-    disk.serial = "x"
-    disk.format = :ext4
-    disk.bus = :virtio
-    disk.cache = :none
-    disk.io_mode = :native
-    disk.discard = :ignore
-    disk.detect_zeroes = :off
-    disk.image = :qcow2
-  end 
+    vm.add_disk :vault do |disk|
+      disk.size = 1024
+      disk.read_only = false
+      disk.serial = "x"
+      disk.format = :ext4
+      disk.bus = :virtio
+      disk.cache = :none
+      disk.io_mode = :native
+      disk.discard = :ignore
+      disk.detect_zeroes = :off
+      disk.image = :qcow2 
+      disk.add_layer :base do |layer|
+        layer.read_only = true
+        layer.size = 256 
+      end
 
-  config.ssh do |ssh|
-    ssh.keys_only = true
-    ssh.root_login = false 
-    ssh.port = 22 
-    ssh.keep_alive = true
+    vm.add_network :virbr0 do |net| 
+      net.ports do |port|
+        port.allow(22)
+        port.allow(80)
+        port.allow(8080)
+        port.forward("remote.host:8080", "localhost:3000")
+      end
+
+      net.ssh do |ssh|
+        ssh.keys_only = true
+        ssh.root_login = false 
+        ssh.port = 22 
+        ssh.keep_alive = true
+      end
+
+      net.add_device :ens0 do |dev|
+        dev.version = 4
+        dev.mode = :static 
+        dev.model = :virtio
+        dev.address = "10.200.200.125"
+        dev.dns = "8.8.4.4"
+        dev.mac = "00:00:10:20:20:24"
+      end
+    end
   end
 
   config.os :debian do |os|
@@ -102,6 +125,10 @@ Portal.configure do |config|
       end
     end
 
+    os.services do |service|
+      service.enable("ssh")
+    end
+
     os.filesystem do |fs|
       fs.rm("/home/user/Downloads")
       fs.rm("/home/user/Public")
@@ -148,17 +175,6 @@ Portal.configure do |config|
     os.install_configs do |config|
       config.repository = "github.com/multiverse-os/provisioning/app"
       config.install("/etc/hosts", "/etc/hosts")
-    end
-
-    os.add_network :virbr0 do |net|
-      net.add_device :ens0 do |dev|
-        dev.version = 4
-        dev.mode = :static 
-        dev.model = :virtio
-        dev.address = "10.200.200.125"
-        dev.dns = "8.8.4.4"
-        dev.mac = "00:00:10:20:20:24"
-      end
     end
   end
 
