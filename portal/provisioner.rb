@@ -3,6 +3,7 @@ module Portalgun
     class Provisioner
       attr :method
     end
+
   end
 end
 

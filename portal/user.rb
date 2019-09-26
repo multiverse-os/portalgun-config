@@ -2,16 +2,13 @@ module Portalgun
   class Portal 
     class OperatingSystem
       class User
-        attr :username
-        attr_accessor :groups
+        attr_accessor :name
         attr_accessor :authorized_keys
+        attr_accessor :groups
 
-        def name=(name)
-          @username = name 
-        end
-
-        def name 
-          @username
+        def initialize
+          @authorized_keys = Array.new 
+          @groups = Array.new
         end
 
       end

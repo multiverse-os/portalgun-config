@@ -4,6 +4,7 @@ require_relative "portal/operating_system"
 require_relative "portal/package_manager"
 require_relative "portal/kernel"
 require_relative "portal/network"
+require_relative "portal/network_device"
 require_relative "portal/user"
 
 module Portalgun
@@ -19,10 +20,23 @@ module Portalgun
     p portal.operating_system.name
     p "portal.operating_system.release"
     p portal.operating_system.release
-    p "os.user"
+    p "os.users"
     p portal.operating_system.users.length
     p portal.operating_system.users.first.name
     p portal.operating_system.users.last.name
+    p "os.pm"
+    p "  os.pm.install"
+    p portal.operating_system.package_manager.install.length 
+    p "  os.pm.remove"
+    p portal.operating_system.package_manager.remove.length 
+    p "os.kernel"
+    p "  os.kernel.modules"
+    p portal.operating_system.kernel.modules.length
+    p "os.networks"
+    p portal.operating_system.networks.length
+    p "os.networks.devices"
+    p portal.operating_system.networks.first.devices.length 
+    p portal.operating_system.networks.first.devices.first.name
     p Marshal.dump(portal).unpack("H*")
   end
 end

@@ -7,35 +7,34 @@ Portal.configure do |config|
   config.os :debian do |os|
     os.release = "bullseye"
 
-    os.add_user do |user|
-      user.name = "user"
+    os.add_user :user do |user|
       user.authorized_keys = ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"]
       user.groups = "kvm"
     end
 
-    os.add_user do |user|
-      user.name = "cool"
+    os.add_user :cool do |user|
       user.authorized_keys = ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"]
       user.groups = "kvm"
     end
 
-    #os.package_manager do |pm|
-    #  pm.install = ["vim", "nvim"]
-    #  pm.remove = ["nano"]
-    #end
+    os.package_manager do |pm|
+      pm.install = ["vim", "nvim"]
+      pm.remove = ["nano"]
+    end
 
-    #os.kernel do |k|
-    #  k.modules = ["p9", "p9net", "p9net_virtio"]
-    #end
+    os.kernel do |k| 
+      k.modules = ["p9", "p9net", "p9net_virtio"]
+    end
 
-    #os.network :virbr0 do |net|
-    #  net.device :ens0 do |dev|
-    #    dev.ip4_mode = :static
-    #    dev.ip = "10.200.200.125"
-    #    dev.dns = "8.8.4.4"
-    #    dev.mac = "00:00:10:20:20:24"
-    #  end
-    #end
+    os.add_network :virbr0 do |net|
+      net.add_device :ens0 do |dev|
+        dev.version = 4
+        dev.mode = :static
+        dev.address = "10.200.200.125"
+        dev.dns = "8.8.4.4"
+        dev.mac = "00:00:10:20:20:24"
+      end
+    end
   end
 
 end

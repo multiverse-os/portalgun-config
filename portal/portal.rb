@@ -13,13 +13,13 @@ module Portalgun
     end
 
     def self.configure(&config)
-      config.call(self)
+      config.call(self) if block_given?
       return self
     end 
 
     def self.os(name, &os)
       @os = OperatingSystem.new
-      os.call(@os)
+      os.call(@os) if block_given?
       @os.name = name
       return @os
     end
@@ -27,6 +27,7 @@ module Portalgun
     def self.operating_system 
       @os
     end
+
   end
 end
 
