@@ -2,13 +2,12 @@
 # vi: set ft=ruby :
 
 Portal.configure do |config|
-  config.name = "rubydev"
-  config.hostname = "rubydev"
-  config.category = "multiverse"
-  config.subcategory = "app"
-  config.ephemeral = true
 
-  config.host do |vm|
+  config.host :firefox do |vm|
+    vm.hostname = "rubydev"
+    vm.category = :multiverse
+    vm.subcategory = :app
+    vm.ephemeral = true
     vm.cpus = 4 
     vm.ram = 4096
     vm.pinned_cpus = [1,3,5] 
@@ -78,122 +77,122 @@ Portal.configure do |config|
         dev.mac = "00:00:10:20:20:24"
       end
     end
-  end
 
-  config.os :debian do |os|
-    os.release = :bullseye
+    vm.os :debian do |os|
+      os.release = :bullseye
 
-    os.add_user :user do |user|
-      user.authorized_keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"
-      ]
-      user.groups = ["kvm"] 
-      user.dot_configs do |dot|
-        dot.edit :bashrc do |config|
-          config.append("alias vim='nvim'")
-          config.append("alias ls='ls -lah'")
-          config.append("export GOPATH='/home/user/go'")
-        end
-        dot.edit :gitconfig do |config| 
-          config.name = "Your Name"
-          config.email = "you@example.com"
-        end
-        dot.edit :vimrc do |config|
-          config.append('" Test comment')
+      os.add_user :user do |user|
+        user.authorized_keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"
+        ]
+        user.groups = ["kvm"] 
+        user.dot_configs do |dot|
+          dot.edit :bashrc do |config|
+            config.append("alias vim='nvim'")
+            config.append("alias ls='ls -lah'")
+            config.append("export GOPATH='/home/user/go'")
+          end
+          dot.edit :gitconfig do |config| 
+            config.name = "Your Name"
+            config.email = "you@example.com"
+          end
+          dot.edit :vimrc do |config|
+            config.append('" Test comment')
+          end
         end
       end
-    end
 
-    os.shell "/bin/bash" do |sh|
-      sh.run("echo 'hi'")
-    end
-
-    os.add_user :cool do |user|
-      user.authorized_keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"
-      ]
-      user.groups = ["kvm"]
-    end
-
-    os.package_manager do |pm|
-      pm.install = ["vim", "neovim", "curl", "wget", "git", "openssh-server", "tor"]
-      pm.remove = [
-        "nano", "apache-bin", "baobab", "bluez", "bluez-obexd", "brasero-cdrkit",
-        "brasero-common", "bubblewrap", "calf-plugins", "cdrdao", "crda", "cheese-common",
-        "cups-pk-helper", "cracklib-runtime", "dvdauthor", "dh-python", "docbook-xml",
-        "debian-faq", "emacsen-common", "enchant", "flac", "genisoimage", "gnome-sushi",
-        "ghostscript", "javascript-common", "lame", "poppler-data", "samba-libs", "telnet",
-        "wireless-regdb", "wpasupplicant", "zietgeist-core"]
-      pm.config.append('APT::Get::Install-Recommends "false";')
-      pm.config.append('APT::Get::Install-Suggests   "false";')
-      pm.repositories do |repositories|
-        repositories.main = [
-          "deb http://ftp.no.debian.org/debian/ bullseye main", 
-          "deb-src http://ftp.no.debian.org/debian/ bullseye main"
-        ]
-        repositories.security = [
-          "deb http://ftp.no.debian.org/debian-security buster/updates main",
-          "deb-src http://ftp.no.debian.org/debian-security buster/updates main"
-        ]
-        repositories.updates = [
-          "deb http://ftp.no.debian.org/debian/ buster-updates main",
-          "deb-src http://ftp.no.debian.org/debian/ buster-updates main"
-        ]
+      os.shell "/bin/bash" do |sh|
+        sh.run("echo 'hi'")
       end
-    end
 
-    os.services do |service|
-      service.enable("ssh")
-    end
+      os.add_user :cool do |user|
+        user.authorized_keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"
+        ]
+        user.groups = ["kvm"]
+      end
 
-    os.filesystem do |fs|
-      fs.rm("/home/user/Downloads")
-      fs.rm("/home/user/Public")
-      fs.rm("/home/user/Templates")
-      fs.rm("/home/user/Pictures")
-      fs.rm("/home/user/Documents")
-      fs.rm("/home/user/Videos")
-      fs.rm("/home/user/Music")
-      fs.ln("/media/user/Downloads", "/home/user/Downloads")
-      fs.mkdir("/home/user/go")
-
-      fs.path :etc do |etc|
-        etc.edit :resolvconf do |config|
-          config.append("nameserver 212.82.226.212")
-          config.append("nameserver 8.8.4.4")
-        end
-        
-        etc.edit :issue do |config|
-          config.overwrite("Multiverse OS App VM")
-        end
-
-        etc.edit :motd do |config|
-          config.overwrite("[Debian 10 GNU/Linux]")
-        end
-
-        etc.edit :sysctl do |config|
-          config.append("net.ipv4.conf.all.send_redirects = 0")
-        end
-
-        etc.edit :crontab do |config|
-          config.append("25 6 * * * root test -x do something")
-        end
-
-        etc.edit :fstab do |config| 
-          config.append("Downloads /media/user/Downloads 9p trans=virtio,9p2000.L,rw,cache=none,nofail 0 0")
+      os.package_manager do |pm|
+        pm.install = ["vim", "neovim", "curl", "wget", "git", "openssh-server", "tor"]
+        pm.remove = [
+          "nano", "apache-bin", "baobab", "bluez", "bluez-obexd", "brasero-cdrkit",
+          "brasero-common", "bubblewrap", "calf-plugins", "cdrdao", "crda", "cheese-common",
+          "cups-pk-helper", "cracklib-runtime", "dvdauthor", "dh-python", "docbook-xml",
+          "debian-faq", "emacsen-common", "enchant", "flac", "genisoimage", "gnome-sushi",
+          "ghostscript", "javascript-common", "lame", "poppler-data", "samba-libs", "telnet",
+          "wireless-regdb", "wpasupplicant", "zietgeist-core"]
+        pm.config.append('APT::Get::Install-Recommends "false";')
+        pm.config.append('APT::Get::Install-Suggests   "false";')
+        pm.repositories do |repositories|
+          repositories.main = [
+            "deb http://ftp.no.debian.org/debian/ bullseye main", 
+            "deb-src http://ftp.no.debian.org/debian/ bullseye main"
+          ]
+          repositories.security = [
+            "deb http://ftp.no.debian.org/debian-security buster/updates main",
+            "deb-src http://ftp.no.debian.org/debian-security buster/updates main"
+          ]
+          repositories.updates = [
+            "deb http://ftp.no.debian.org/debian/ buster-updates main",
+            "deb-src http://ftp.no.debian.org/debian/ buster-updates main"
+          ]
         end
       end
-    end
 
-    os.kernel do |kernel| 
-      kernel.modules = ["p9", "p9net", "p9net_virtio"]
-      kernel.paremeters = "quiet nomodeset"
-    end
+      os.services do |service|
+        service.enable("ssh")
+      end
 
-    os.install_profile :default do |profile|
-      profile.repository = "github.com/multiverse-os/provisioning/app"
-      profile.install("/etc/hosts")
-      profile.install("/etc/ssh/sshd")
+      os.filesystem do |fs|
+        fs.rm("/home/user/Downloads")
+        fs.rm("/home/user/Public")
+        fs.rm("/home/user/Templates")
+        fs.rm("/home/user/Pictures")
+        fs.rm("/home/user/Documents")
+        fs.rm("/home/user/Videos")
+        fs.rm("/home/user/Music")
+        fs.ln("/media/user/Downloads", "/home/user/Downloads")
+        fs.mkdir("/home/user/go")
+
+        fs.path :etc do |etc|
+          etc.edit :resolvconf do |config|
+            config.append("nameserver 212.82.226.212")
+            config.append("nameserver 8.8.4.4")
+          end
+          
+          etc.edit :issue do |config|
+            config.overwrite("Multiverse OS App VM")
+          end
+
+          etc.edit :motd do |config|
+            config.overwrite("[Debian 10 GNU/Linux]")
+          end
+
+          etc.edit :sysctl do |config|
+            config.append("net.ipv4.conf.all.send_redirects = 0")
+          end
+
+          etc.edit :crontab do |config|
+            config.append("25 6 * * * root test -x do something")
+          end
+
+          etc.edit :fstab do |config| 
+            config.append("Downloads /media/user/Downloads 9p trans=virtio,9p2000.L,rw,cache=none,nofail 0 0")
+          end
+        end
+      end
+
+      os.kernel do |kernel| 
+        kernel.modules = ["p9", "p9net", "p9net_virtio"]
+        kernel.paremeters = "quiet nomodeset"
+      end
+
+      os.install_profile :default do |profile|
+        profile.repository = "github.com/multiverse-os/provisioning/app"
+        profile.install("/etc/hosts")
+        profile.install("/etc/ssh/sshd")
+      end
     end
   end
 
