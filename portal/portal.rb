@@ -1,15 +1,18 @@
 module Portalgun
   class Portal
-    attr :machine_name
-    attr :os
-    attr :release
+    attr :name
+    attr :hosts
+
+    def initialize
+      @hosts = Array.new
+    end
 
     def self.name=(name)
-      @machine_name = name
+      @name = name
     end
 
     def self.name 
-      @machine_name 
+      @name 
     end
 
     def self.configure(&config)
@@ -17,15 +20,22 @@ module Portalgun
       return self
     end 
 
-    def self.os(name, &os)
-      @os = OperatingSystem.new
-      os.call(@os) if block_given?
-      @os.name = name
-      return @os
+    # Its not just VirtualMachine because this works with 
+    # provisioning bare metal machines as well
+    def self.host(name, &host)
+      @host = Host.new
+      host.call(@host) if block_given?
+      @host.name = name
+      @hosts += @host
+      return @host
     end
 
-    def self.operating_system 
-      @os
+    def self.host
+      @hosts.first
+    end
+
+    def self.hosts
+      @hosts
     end
 
   end

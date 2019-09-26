@@ -1,97 +1,280 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
+###########################################################################
+### PORTALGUN #############################################################
+###########################################################################
+# @portalgun.path[:data]
+# @portalgun.key[:identity].path
+# @portalgun.key[:identity].public_key
+# @portalgun.networks = [{"virbr0": ...}, {"virbr1": ...}, {"virbr2": ...},...]
+# @portalgun.network[:virbr0].ip
+# @portalgun.network[:virbr0].subnet
+# @portalgun.network[:virbr0].gateway
+# @portalgun.network[:virbr0].netmask
+# @portalgun.network[:virbr0].clients = [{host: "hostname", ip:
+# "10.200.200.10"},...]
+# @portalgun.network[:virbr0].wan.location = (location of the endpoint)
+# @portalgun.network[:virbr0].wan.ip = (ip of the endpoint)
+# @portalgun.network[:virbr0].ports[:open] = [80, 2000,...]
+# @portalgun.network[:virbr0].routes = [{port: 22, host: "hostname", ip:
+# "10.200.200.10"},...]
+# @portalgun.hosts = [{host: "hostname", network: "virbrX", ip:
+# "10.200.200.10"},....]
+# @portalgun.host[:hostname] = (specific information about a host 
+# @portalgun.host[:hostname].reboot
+# @portalgun.host[:hostname].start
+# @portalgun.host[:hostname].off
+# @portalgun.host[:hostname].on 
+# @portalgun.host[:hostname].disk[:name].snapshot
+# @portalgun.host[:hostname].network[:virbr0].nic[:ens3].disconnect
+# @portalgun.host[:hostname].usb[:usb_id].disconnect
+# @portalgun.host[:hostname].disk[:name].install(:debian, :bullseye)
+# @portalgun.cluster[:name]
+## RANDOM GENERATION ######################################################
+# @portalgun.random.mac_address
+# @portalgun.random.name
+###############################################################################
+###############################################################################
 
-Portal.configure do |config|
+Portal.configure do |portal|
 
-  config.host :firefox do |vm|
-    vm.hostname = :go_research
-    vm.category = :multiverse
-    vm.subcategory = :app
-    vm.ephemeral = true
-    vm.cpus = 4 
-    vm.ram = 4096
-    vm.pinned_cpus = [1,3,5] 
-    vm.emulator = :qemu  
-    vm.arch = :x86_64
-    vm.chipset = :i440fx
-    vm.bios = :ovmf
-    vm.boot_order = [:vault] 
+  portal.add_host :firefox do |host|
+    host.cluster = :multiverse
+    host.category = :virtual
+    host.remote = false
 
-    vm.add_device :sound do |device|
-      device.model = :ich9
-    end
-    vm.add_device :input do |device|
-      device.input_type = :tablet
-    end 
-    vm.add_device :rng 
-
-    vm.spice do |spice|
-      spice.address = "0.0.0.0"
-      spice.allow = ["10.200.200.21"]
-      spice.port = 5900
-      spice.tls = true
-      spice.password = "test"
-      spice.keymap = "en-us"
-    end
-
-    vm.add_disk :vault do |disk|
-      disk.size = 1024
-      disk.read_only = false
-      disk.serial = "x"
-      disk.filesystem = :ext4
-      disk.bus = :virtio
-      disk.cache = :none
-      disk.io_mode = :native
-      disk.discard = :ignore
-      disk.detect_zeroes = :off
-      disk.image_format = :qcow2
-      disk.add_encryption :luks do |encryption|
-        encryption.keys = ["path/to/key", "path/2/second/key"]
+    host.data = "path/to/data"
+    host.add_backup do |backup|
+      backup.compression = :gzip
+      backup.archive = :tar
+      backup.schedule = :daily
+      backup.add_remote do |remote|
+        remote.address = "10.255.255.10"
+        remote.protocol = :ssh
+        remote.duplicates = 5 
       end
-      disk.add_layer :base do |layer|
-        layer.read_only = true
-        layer.size = 256 
+      backup.encryption do |encryption|
+        encryption.algorithm = :gpg
+        encryption.layers = 2
+        encryption.keys = ["/path/to/key", "path/to/key"]
       end 
-    end 
+    end
 
-    vm.add_network :virbr0 do |net| 
-      net.ports do |port|
-        port.allow(22)
-        port.allow(80)
-        port.allow(8080)
-        port.forward("remote.host:8080", "localhost:3000")
+    host.add_owner do |owner|
+      owner.name = "name"
+      owner.key = "/path/to/key"
+    end
+
+    host.virtual_machine do |vm|
+      vm.category = :application 
+      vm.subcategory = :browser
+
+      vm.ephemeral = true
+      vm.sandbox = true
+
+      vm.controller = "10.200.200.1"
+      vm.nested = true 
+      vm.depth = 1
+
+      vm.add_bios do |bios|
+        bios.name = :ovmf
+        bios.path = "/path/to/bios"
+        bios.sign = true 
+        bios.key do |key|
+          key.path = "/path/to/key"
+        end
       end
 
-      net.ssh do |ssh|
-        ssh.keys_only = true
-        ssh.root_login = false 
-        ssh.port = 22 
-        ssh.allow = ["10.200.200.21"]
-        ssh.keep_alive = true
+      vm.hypervisor :kvm do |kvm|
+        kvm.emulator :qemu do |qemu|
+          qemu.path = "/path/to/emulator"
+          qemu.arch = :x86_64
+          qemu.chipset = :i440fx
+          qemu.append_parameter("-q test")
+        end
       end
 
-      net.add_device :ens0 do |dev|
-        dev.version = 4
-        dev.mode = :static 
-        dev.model = :virtio
-        dev.address = "10.200.200.125"
-        dev.dns = "8.8.4.4"
-        dev.mac = "00:00:10:20:20:24"
+      vm.add_cpu do |cpu|
+        cpu.model = :passthrough
+        cpu.minimum = 4 
+        cpu.maximum = 8
+        cpu.pinned = [1,3,5] 
+        cpu.sockets = 4 
+        cpu.cores = 1 
+        cpu.threads = 1
+      end
+
+      vm.add_memory do |memory|
+        memory.minimum = 4096
+        memory.maximum = 8192
+      end
+      
+      vm.add_device :channel do |channel|
+        channel.name = "com.redhat.spice.0"
+        channel.device_type = "pty"
+      end
+
+      vm.add_device :console do |console|
+        console.device_type = :pty
+      end
+
+      vm.add_device :rng 
+
+      vm.passthrough :pci do |pci|
+        pci.bus = "00:13.0"
+        pci.firmware = "/path/to/firmware"
+      end
+
+      vm.passthrough :usb do |usb|
+        usb.id = "001:002"
+      end
+
+      vm.add_device :tpm do |tpm|
+        tpm.model = :crb
+        tpm.backend = :emulated 
+        tpm.version = "1.2"
+      end
+
+      vm.add_device :video do |video|
+        video.model = :qxl
+        video.spice do |spice|
+          spice.address = "0.0.0.0"
+          spice.allow = ["10.200.200.21"]
+          spice.port = 5900
+          spice.tls = true
+          spice.password = "test"
+          spice.keymap = "en-us"
+        end
+      end
+
+      vm.add_device :sound do |sound|
+        sound.model = :ich9
+      end
+
+      vm.add_device :input do |input|
+        input.device_type = :tablet
+      end 
+
+      vm.add_device :network do |network|
+        network.bridge = :virbr0
+        network.model = :virtio
+        network.mac = "00:00:10:00:00:10"
+      end
+
+      vm.add_device :disk do |disk|
+        disk.size = 4096 
+        disk.image_format = :qcow2
+      end
+
+      vm.storage do |storage|
+        storage.boot_order = [:vault] 
+
+
+        storage.add_disk :debian do |disk|
+          disk.path = "/path/to/disk"
+          disk.device_type = :removable
+          disk.bus = :virtio
+        end
+
+        storage.passthrough :disk_id do |disk|
+          disk.read_only = false 
+          disk.fstab("Downloads /media/user/Downloads 9p trans=virtio,9p2000.L,rw,cache=none,nofail 0 0")
+        end
+
+        storage.add_share :p9 do |share|
+          share.sourch = "/path/to/share"
+          share.target = "Downloads"
+          share.driver = :path
+          share.write_policy = :immediate
+          share.read_only = false
+          share.fstab("Downloads /media/user/Downloads 9p trans=virtio,9p2000.L,rw,cache=none,nofail 0 0")
+        end
+
+        storage.add_disk :vault do |disk|
+          disk.size = 1024
+          disk.read_only = false
+          disk.serial = "x"
+          disk.filesystem = :ext4
+          disk.bus = :virtio
+          disk.cache = :none
+          disk.io_mode = :native
+          disk.ephemeral = true
+          disk.discard = :ignore
+          disk.detect_zeroes = :off
+          disk.image_format = :qcow2
+          disk.add_encryption :luks do |encryption|
+            encryption.layers = 2
+            encryption.keys = ["path/to/key", "path/2/second/key"]
+          end
+          disk.add_layer :base do |layer|
+            layer.read_only = true
+            layer.size = 256 
+          end 
+        end 
       end
     end
 
-    vm.os :debian do |os|
+    #host.os partition: :vda2 do |os|
+    host.os disk: :vda do |os|
+      os.distribution = :debian
       os.release = :bullseye
 
+      os.hostname = :research
+      os.root = :disable
+      os.sudo = :enable
+
+      os.bootloader :initramfs do |ramfs|
+        ramfs.ssh = false
+        ramfs.sign = true
+        ramfs.add_key :gpg do |key|
+          key.path = "/path/to/key"
+        end
+      end
+
       os.add_user :user do |user|
-        user.authorized_keys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"
-        ]
-        user.groups = ["kvm"] 
+        user.sudo = true
+        user.groups = ["kvm"]
+
+        user.ssh do |ssh|
+          ssh.authorized_keys = [
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"]
+          ssh.add_keypair do |keypair|
+            keypair.path = "/path/to/keys"
+            keypair.hosts = ["host1", "host2"]
+          end
+        end
+
+        user.environment do |env|
+          env.add("EDITOR=nvim")
+        end
+
         user.editor = "nvim"
         user.shell = "/bin/bash"
         user.language = "en_US.UTF-8"
-        user.dot_configs do |dot|
+
+        user.password_storage do |pass_store|
+          pass_store.add_repository("https://github.com/multiverse-os/pass-store")
+          pass_store.gpg_ids = ["Wade Welles"]
+        end
+
+        user.add_project_category :development do |category|
+          category.path = "/home/user/Development"
+          category.add_project do |project|
+            project.language = "go"
+            project.repository("https://github.com/multiverse-os/cli")
+            project.config :dot_files do |dot|
+              dot.config :gitconfig do |git| 
+                git.name = "Some name"
+                git.email = "someone@email.com"
+              end
+            end
+            project.add_key :gpg do |gpg|
+              gpg.path = "/path/to/key"
+            end
+          end
+        end
+
+        user.config :dot_files do |dot|
           dot.edit :bashrc do |config|
             config.append("alias vim='nvim'")
             config.append("alias ls='ls -lah'")
@@ -107,10 +290,6 @@ Portal.configure do |config|
         end
       end
 
-      os.shell "/bin/bash" do |sh|
-        sh.run("echo 'hi'")
-      end
-
       os.add_user :cool do |user|
         user.authorized_keys = [
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG9ZZEPytQrgMDEHC641p1W/Wt84dG7Xte9meKbGUAk6 user@host"
@@ -119,7 +298,7 @@ Portal.configure do |config|
       end
 
       os.package_manager do |pm|
-        pm.install = ["vim", "neovim", "curl", "wget", "git", "openssh-server", "tor"]
+        pm.install = ["vim", "neovim", "curl", "wget", "git", "openssh-server", "tor", "pass"]
         pm.remove = [
           "nano", "apache-bin", "baobab", "bluez", "bluez-obexd", "brasero-cdrkit",
           "brasero-common", "bubblewrap", "calf-plugins", "cdrdao", "crda", "cheese-common",
@@ -146,8 +325,27 @@ Portal.configure do |config|
       end
 
       os.services do |service|
-        service.enable("ssh")
-        service.enable("tor")
+        service.enable :ssh do |ssh|
+          ssh.keys_only = true
+          ssh.root_login = false 
+          ssh.port = 22 
+          ssh.listen = "0.0.0.0"
+          ssh.allow = ["10.200.200.21"]
+          ssh.keep_alive = true
+        end
+
+        service.enable :tor do |tor|
+          tor.add_onion :fileshare do |onion|
+            onion.remote_port = 444
+            onion.local_port = 8080
+          end
+        end 
+
+        service.enable :nginx 
+      end
+
+      os.shell :"/bin/bash" do |sh|
+        sh.run("echo 'hi'")
       end
 
       os.filesystem do |fs|
@@ -161,12 +359,17 @@ Portal.configure do |config|
         fs.ln("/media/user/Downloads", "/home/user/Downloads")
         fs.mkdir("/home/user/go")
 
+        fs.encrypt "/var/projects" do |encryption|
+          encryption.layers = 1
+          encryption.keys = ["path/to/key", "path/2/second/key"]
+        end
+
         fs.path :etc do |etc|
           etc.edit :resolvconf do |config|
             config.append("nameserver 212.82.226.212")
             config.append("nameserver 8.8.4.4")
           end
-          
+
           etc.edit :issue do |config|
             config.overwrite("Multiverse OS App VM")
           end
@@ -192,14 +395,66 @@ Portal.configure do |config|
       os.kernel do |kernel| 
         kernel.modules = ["p9", "p9net", "p9net_virtio"]
         kernel.paremeters = "quiet nomodeset"
+        kernel.build do |build|
+          build.source = "/path/to/source"
+          build.patches = "/path/to/kernel/patches"
+          build.settings = "/path/to/config"
+        end
       end
 
-      os.install_profile :default do |profile|
-        profile.repository = "github.com/multiverse-os/provisioning/app"
+      os.profile :default do |profile|
+        profile.repository("github.com/multiverse-os/provisioning/app")
         profile.install("/etc/hosts")
         profile.install("/etc/ssh/sshd")
       end
+
+      os.networking do |network|
+        network.enable :ens5 do |device|
+          device.add_proxy do |proxy|
+            proxy.category = :tor
+            proxy.configuration = "/path/to/configuration"
+          end
+          device.bus = "03:300"
+          device.mac = "00:00:10:02:02:24"
+          device.add_address :ipv4, :dhcp
+        end
+
+        network.enable :ens4 do |device|
+          device.ports do |port|
+            port.allow(22)
+            port.allow(80)
+            port.allow(8080)
+            port.forward("remote.host:8080", "localhost:3000")
+          end
+
+          device.bus = "03:400"
+          device.wireless = true 
+          device.add_access_point "Internet" do |ap|
+            ap.priority = 1
+            ap.authentication = :WPA2
+            ap.add_password do |password|
+              password.file = "path/to/file"
+            end
+            ap.add_address :ipv4, :dhcp
+          end
+        end
+
+        network.enable :ens0 do |device|
+          device.add_proxy do |proxy|
+            proxy.category = :vpn
+            proxy.configuration = "/path/to/configuratiaon"
+          end
+          device.bridge = :virbr0
+          device.model = :virtio
+          device.mac = "00:00:10:20:20:24"
+          device.dns = ["8.8.4.4"]
+          device.add_address :ipv4, :static do |address|
+            address.ip = "10.200.200.125"
+            address.netmask = "255.255.255.0"
+            address.gateway = "10.200.200.1"
+          end
+        end
+      end
     end
   end
-
 end
