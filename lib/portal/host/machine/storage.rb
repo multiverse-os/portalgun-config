@@ -30,6 +30,11 @@ module Portalgun
             Portalgun.disks[disk.label] = disk
             return disk
           end
+
+          def passthrough(path, &p)
+
+
+          end
           #####################################################################
 
         end

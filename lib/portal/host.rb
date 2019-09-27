@@ -10,7 +10,7 @@ module Portalgun
 
       def initialize(name:nil) 
         if name.nil?
-          @name = "portal-#{rand(9999)}"
+          @name = "portal-#{Portalgun.random.name}-#{rand(999)}"
         else
           @name = name
         end

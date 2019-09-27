@@ -5,6 +5,9 @@ module Portalgun
         class Storage
           class Disk
             attr_accessor :label
+            attr_accessor :uuid
+            attr_accessor :passthrough
+            attr_accessor :type
             attr_accessor :size 
             attr_accessor :read_only
             attr_accessor :serial
@@ -22,12 +25,12 @@ module Portalgun
 
             def initialize(label:nil, path:nil)
               if label.nil? 
-                @label = "portal-disk-#{rand(9999)}"
+                @label = "#{Portal.host.last.name}-disk-#{rand(999)}"
               else
                 @label = label 
               end
               if path.nil?
-                @path = Portalgun.data_path
+                @path = Portalgun.storage_path
               else
                 @path = path
               end
@@ -36,7 +39,7 @@ module Portalgun
               @image_format = :qcow2 if @image_format.nil?
               @bus = :virtio if @bus.nil?
               @cache = :none if @cache.nil?
-              @io_mode = :thread if @io_mode.nil?
+              @io_mode = :native if @io_mode.nil?
               @ephemeral = false if @ephemeral.nil?
               @discard = :ignore if @discard.nil?
               @detect_zeroes = false if @detect_zeroes.nil?

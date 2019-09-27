@@ -44,15 +44,51 @@ module Portalgun
     @disks 
   end
 
+  def self.install_disk(os = :debian)
+    InstallMedia.new(os)
+  end
+
   def self.network
     @networks
   end
 
-  def self.package_manager(os = :debian) 
+  def self.os(os = :debian) 
       PackageManager.new(os)
   end
 
 end
+
+class InstallMedia 
+  attr :os 
+  def initialize(os = :debian)
+    @os = os 
+  end
+
+  def iso(release = :buster)
+    if @os == :debian 
+      if release == :buster
+        return "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-mac-10.1.0-amd64-netinst.iso"
+      end
+    end
+  end
+
+  def signature(release = :buster)
+    if @os == :debinan 
+      if release == :buster
+        return "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/SHA256SUMS.sign"
+      end
+    end
+  end
+
+  def checksum(release = :buster)
+    if @os == :debian 
+      if release == :buster
+         return "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/SHA512SUMS"
+      end
+    end
+  end
+end
+
 
 class PackageManager
   attr :os
@@ -70,7 +106,6 @@ end
 
 class Packages 
   attr :os
-
   def initialize(os = :debian)
     @os = :debian
   end
@@ -78,6 +113,41 @@ class Packages
   def games 
     if @os == :debian 
       return ["four-in-a-row", "lightsoff"]
+    end
+  end
+
+  def multiverse
+    MultiversePackages.new(@os)
+  end
+end
+
+class MultiversePackages 
+  attr :os
+  def initialize(os = :debian)
+    @os = :debian
+  end
+
+  def app 
+    if @os == :debian
+      return ["tor"] 
+    end
+  end
+
+  def controller 
+    if @os == :debian
+      return ["tor"] 
+    end
+  end
+
+  def router 
+    if @os == :debian
+      return ["tor"] 
+    end
+  end
+
+  def host 
+    if @os == :debian
+      return ["tor"] 
     end
   end
 end

@@ -48,7 +48,6 @@ require_relative "lib/portal/host/operating_system/user"
 ##
 
 module Portalgun
-
   def self.load(file)
     Portalgun.cache_data
     portal = Portalgun::Portal.new
