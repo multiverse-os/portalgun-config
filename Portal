@@ -163,11 +163,7 @@ Portal.configure do |portal|
       
       vm.qmp = QMP.listen("tcp:0:9991")
 
-      vm.cpu      = CPU.model(:passthrough).cores(4, 8).pin(4).sockets(4).threads(1)
-      # TODO: Make pinning super easy, figure out order automatically
-
-
-
+      vm.cpu      = CPU.model(:passthrough).cores(4, 8).pinned([1,3,5]).sockets(4).threads(1)
       vm.emulator = Emulator.type(:qemu).arch(:x86_64).chipset(:i440fx).path("/path/to/emulator")
 
       vm.boot do |boot|
@@ -179,19 +175,6 @@ Portal.configure do |portal|
       end
 
 
-      vm.before_event(:reboot) do |event|
-        # hooks!
-      end
-
-      vm.before_event(:shutdown) do |event|
-      end
-        
-      vm.after_event(:first_boot) do |event|
-      end 
-
-      vm.after_event(:boot). do |event|
-
-      end
         
 
       ## Memory Defintions
@@ -258,9 +241,19 @@ Portal.configure do |portal|
         ## Disk Images
         Device.disk.megabytes(4096).format(:qcow2),
       )
+    end
+      #########################################################################
+      ### TODO: There is supposedly a sususpend to memory trick you can use 
+      ## to re-eanble graphics cards that do not support passthrough after 
+      ## having their driver enabled. 
+      #########################################################################
+      # --pm OPTIONS
+      # 
+      #     Configure guest power management features. Example:
+      # 
+      #         --pm suspend_to_memi.enabled=on,suspend_to_disk.enabled=off
+      # 
 
-
-      end
       # TODO: Decide if there really should be a separation between storage
       # devices and the other devices, because right now we are going to want to
       # have the ability to register disks in devices to make the API as
@@ -288,11 +281,8 @@ Portal.configure do |portal|
       vm.storage do |storage|
         storage.passthrough "/dev/disk/by-uuid/022bd185-eab7-4faf-96ac-b3e74ecc9f65" do |disk|
           disk.device = "vdf"
+          disk.mount = "/media/user/Vault"
           disk.read_only = false 
-          disk.bus = :virtio
-          disk.mount = "/media/user/Vault" 
-
-          #disk.
           #disk.fstab = "/dev/disk/by-uuid/022bd185-eab7-4faf-96ac-b3e74ecc9f65 /media/user/Vault auto nosuid,nodev,nofail,x-gvfs-show 0 0"
         end
 
@@ -300,7 +290,6 @@ Portal.configure do |portal|
           share.target = "Downloads"
           share.mount = "/media/user/Downloads"
           share.file_source "/path/to/share" do |file|
-            file.write_policy = :immediate
             file.read_only = false
           end
           #share.fstab = "Downloads /media/user/Downloads 9p trans=virtio,9p2000.L,rw,cache=none,nofail 0 0"
@@ -313,7 +302,6 @@ Portal.configure do |portal|
 
         storage.add_disk :file do |disk|
           disk.device    = :hdd 
-          disk.bus       = :ide 
           disk.format    = :qcow2
           disk.queues    = 4 
           disk.read_only = false 
@@ -325,53 +313,30 @@ Portal.configure do |portal|
         end
 
         storage.add_disk :volume do |disk|
-          disk.alias = "vault-1"
-          disk.bus = :virtio
-          disk.format = :raw # or qemua
           disk.boot_order = 2
+          disk.alias = "vault-1"
+          disk.format = :raw # or qemua
           disk.capacity = Size.gigabytes(5)
-          disk.path = "/var/lib/libvirt/images/demo.luks"
           disk.cache = :none # [:default, :none, :writethrough, :writeback, :directsync, :unsafe
           disk.copy_on_read = :on #[:on, :off]
           disk.detect_zeroes = :unmap #[:off, :on, :unmap] 
           disk.queues = 4 
-          disk.shareable = false
           disk.file_source "/var/lib/xen/images/fv0" do 
             disk.format = :qcow2 
-          end
-          disk.io :threads do |io| # [:threads, :native]
-            io.ioeventfd = :on # [:on, :off] #TODO, make :on = true, and :off = false | default: :off 
-            io.event_idx = :on # [:on, :off]  
-            io.threads = 4 
           end
           disk.events do |event|
             event.on_error = :stop # [:stop, :report, :ignore]
             event.on_discard = :unmap #[:unmap, :ignore]
           end
-          disk.encrypt :luks do |encryption|
-            encryption.passphrase = @owner.luks_pass 
-            encryption.cipher do |cipher|
-              cipher.name = :twofish    # [:aes, :des, :cast5, :serpent, :twofish, ...]
-              cipher.size = 256         # [:256, :192, :128]
-              cipher.mode = :cbc        # [:cbc, :xts, :ecb]
-              cipher.hash = :sha256     # [:md5, :sha1, :sha256]
-            end 
-            encryption.ivgen do |ivgen|
-              ivgen.name = :plain64     # [:plain, :plain64, :essiv]
-              ivgen.hash  = :sha256     # [:md5, :sha1, :sha256]
-            end
-          end
         end
       end
 
       storage.add_disk :network do |disk| 
+        disk.boot_order = 1
+        disk.ephemeral = true 
         disk.device = :hdb
-        disk.bus = :ide
         disk.format = :raw
         disk.io = :threads 
-        disk.boot_order = 1
-        disk.shareable = true
-        disk.ephemeral = true 
         disk.serial = "WD-WMAP9A966149"
         disk.network_source :sheepdog do |source|
           source.name = "image_name"
@@ -394,7 +359,6 @@ Portal.configure do |portal|
       storage.add_disk :block do |disk|
         disk.cdrom = true 
         disk.device = :sda 
-        disk.bus = :scsi
         disk.format = :raw 
         disk.block_source "/dev/sda" do |block|
           block.format = :raw
@@ -404,7 +368,6 @@ Portal.configure do |portal|
       storage.add_disk :network do |disk|
         disk.size = Size.megabytes(1024)
         disk.device = :hdi
-        disk.bus = :virtio
         disk.network_source :ftps do |source|
           source.name = "url"
           source.host = "hostname"
