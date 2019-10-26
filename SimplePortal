@@ -1,0 +1,17 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+###############################################################################
+
+Portal.configure do |portal|
+  #portal.name = "test"
+  portal.storage_path = "/var/multiverse/portals/"
+
+  portal.add_host name: :controller, remote: false do |host|
+    host.os path: "/dev/sd4" do |os|
+    os.distribution = :debian
+    os.release = :bullseye
+
+    #  os.hostname = :research 
+    end
+  end
+end

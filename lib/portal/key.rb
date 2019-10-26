@@ -1,11 +1,13 @@
 module Portalgun
   class Key
-    attr_accessor :key_type
+    attr_accessor :type
+    attr_accessor :name
     attr_accessor :path 
     attr_accessor :public_key
 
-    def initialize(key_type:nil,path:nil,public_key:nil)
-      @key_type = key_type 
+    def initialize(type:nil,name:nil,path:nil,public_key:nil)
+      @type = type 
+      @name = name
       @path = path
       @public_key = public_key 
       return self

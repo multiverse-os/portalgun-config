@@ -1,29 +1,31 @@
 module Portalgun
   class Portal
-    class Host 
+    class Host < Machine
       attr_accessor :name
-      attr_accessor :cluster
       attr_accessor :remote
       attr :owner 
       attr :backup_system
       attr :machines
 
-      def initialize(name:nil) 
+      def initialize(name:nil,remote:nil)
         if name.nil?
           @name = "portal-#{Portalgun.random.name}-#{rand(999)}"
         else
           @name = name
         end
-        @machines = Array.new
-        @owner = Owner.new
-        @backup_system = BackupSystem.new
-        Portalgun.hosts[@name] = self
+        @remote = remote
+
+        @operating_system = OperatingSystem.new
+
+        @machines = Hash.new
+        #@backup_system = BackupSystem.new
+
         return self
       end
-    
+
       ## CONFIG DEFINED #######################################################
-      def owner(name, &owner)
-        @owner.name = name 
+      def add_owner(type:,name:, &owner)
+        @owner = Owner.new(type: type, name: name)
         owner.call(@owner) if block_given?
         return @owner
       end
@@ -34,31 +36,40 @@ module Portalgun
         return @backup_system
       end
 
-      def physical_machine(name, &m)
+      def physical_machine(name:, &pm)
         machine = Machine.new(name: name, machine_type: :physical)
-        m.call(machine) if block_given?
-        @machines += [machine]
+        pm.call(machine) if block_given?
+        @machines[name] = [machine]
         Portalgun.machines[name] = machine
         return machine
       end
 
-      def virtual_machine(name, &vm)
+      def virtual_machine(name:, &vm)
         machine = Machine.new(name: name, machine_type: :virtual)
         vm.call(machine) if block_given?
-        @machines += [machine]
+        @machines[name] = [machine]
         Portalgun.machines[name] = machine
         return machine
       end
 
-      def machine(name, type:, &m)
+      def machine(name:nil, type:nil, &m)
+        @name = "portal-#{Portalgun.random.name}-#{rand(999)}" if name.nil?
+        type = :virtual if type.nil?
         machine = Machine.new(name: name, machine_type: type)
         m.call(machine) if block_given?
-        @machines += [machine]
+        @machines[name] = [machine]
         Portalgun.machines[name] = machine
         return machine
       end
       #########################################################################
+        
+      #def os=(os)
+      #  @operating_system = os 
+      #end
 
+      #def os 
+      #  @operating_system 
+      #end
     end
   end
 end

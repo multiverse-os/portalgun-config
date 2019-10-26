@@ -1,18 +1,20 @@
 module Portalgun
   class Portal
-    class Host
+    class Machine
       class OperatingSystem
         attr_accessor :name
+        attr_accessor :path
+        attr_accessor :distribution 
         attr_accessor :release
-        attr :kernel
+        attr_accessor :kernel
         attr :package_manager
         attr :users
         attr :networks
 
-        def initialize
+        def initialize(path:nil) 
+          @path = path
           @users = Array.new
           @networks = Array.new
-          @kernel = Kernel.new 
           @package_manager = PackageManager.new
         end
 
@@ -30,10 +32,6 @@ module Portalgun
           return @kernel
         end
 
-        def kernel=(kernel)
-          @kernel = kernel
-        end
-
         def add_user(name, &user)
           u = User.new
           user.call(u)
@@ -47,7 +45,6 @@ module Portalgun
           n.name = name
           @networks << n
         end
-
       end
     end
   end

@@ -3,33 +3,33 @@
 # vi: set ft=ruby :
 require_relative "lib/portal/portal"
 require_relative "lib/portal/helper"
+require_relative "lib/portal/machine"
 require_relative "lib/portal/host"
 require_relative "lib/portal/key"
 require_relative "lib/portal/host/owner"
-require_relative "lib/portal/host/machine"
-require_relative "lib/portal/host/machine/bios"
-require_relative "lib/portal/host/machine/cpu"
-require_relative "lib/portal/host/machine/emulator"
-require_relative "lib/portal/host/machine/device"
-require_relative "lib/portal/host/machine/device/input"
-require_relative "lib/portal/host/machine/device/network"
-require_relative "lib/portal/host/machine/device/sound"
-require_relative "lib/portal/host/machine/device/video"
-require_relative "lib/portal/host/machine/disk"
-require_relative "lib/portal/host/machine/disk/layer"
-require_relative "lib/portal/host/machine/disk/filesystem"
-require_relative "lib/portal/host/machine/storage"
 require_relative "lib/portal/host/backup/system"
 require_relative "lib/portal/host/backup/server"
-require_relative "lib/portal/host/operating_system"
-require_relative "lib/portal/host/operating_system/kernel"
-require_relative "lib/portal/host/operating_system/package_manager"
-require_relative "lib/portal/host/operating_system/network"
-require_relative "lib/portal/host/operating_system/service"
-require_relative "lib/portal/host/operating_system/service/ssh"
-require_relative "lib/portal/host/operating_system/service/tor"
-require_relative "lib/portal/host/operating_system/service/open_vpn"
-require_relative "lib/portal/host/operating_system/user"
+require_relative "lib/portal/machine/bios"
+require_relative "lib/portal/machine/cpu"
+require_relative "lib/portal/machine/emulator"
+require_relative "lib/portal/machine/device"
+require_relative "lib/portal/machine/device/input"
+require_relative "lib/portal/machine/device/network"
+require_relative "lib/portal/machine/device/sound"
+require_relative "lib/portal/machine/device/video"
+require_relative "lib/portal/machine/disk"
+require_relative "lib/portal/machine/disk/layer"
+require_relative "lib/portal/machine/disk/filesystem"
+require_relative "lib/portal/machine/storage"
+require_relative "lib/portal/machine/operating_system"
+require_relative "lib/portal/machine/operating_system/kernel"
+require_relative "lib/portal/machine/operating_system/package_manager"
+require_relative "lib/portal/machine/operating_system/network"
+require_relative "lib/portal/machine/operating_system/service"
+require_relative "lib/portal/machine/operating_system/service/ssh"
+require_relative "lib/portal/machine/operating_system/service/tor"
+require_relative "lib/portal/machine/operating_system/service/open_vpn"
+require_relative "lib/portal/machine/operating_system/user"
 
 #
 ###############################################################################
@@ -46,40 +46,39 @@ require_relative "lib/portal/host/operating_system/user"
 ##
 #
 ##
-
 module Portalgun
   def self.load(file)
     Portalgun.cache_data
     portal = Portalgun::Portal.new
     portal = portal.instance_eval file
 
-
+    p portal
+    p "CLASS"
     p portal.class
-    p "returned values from file instance eval"
-    p ""
-    p "host.vm.portal.name"
-    p portal.host(:controller).name
+    p "NAME"
+    p "portal.host(:name).name"
+    p portal.host(:controller)
     p "host.vm.portal.operating_system.name"
-    p portal.host(:controller).machine.operating_system.name
-    p "host.vm.portal.operating_system.release"
-    p portal.host(:controller).machine.operating_system.release
-    p "host.vm.os.users"
-    p portal.host(:controller).machine.operating_system.users.length
-    p portal.host(:controller).machine.operating_system.users.first.name
-    p portal.host(:controller).machine.operating_system.users.last.name
-    p "host.vm.os.pm"
-    p "  host.vm.os.pm.install"
-    p portal.host(:controller).machine.operating_system.package_manager.install.length 
-    p "  host.vm.os.pm.remove"
-    p portal.host(:controller).machine.operating_system.package_manager.remove.length 
-    p "host.vm.os.kernel"
-    p "  host.vm.os.kernel.modules"
-    p portal.host(:controller).machine.operating_system.kernel.modules.length
-    p "host.vm.os.networks"
-    p portal.host(:controller).machine.operating_system.networks.length
-    p "host.vm.os.networks.devices"
-    p portal.host(:controller).machine.operating_system.networks.first.devices.length 
-    p portal.host(:controller).machine.operating_system.networks.first.devices.first.name
+    p portal.host(:controller).operating_system.name
+    #p "host.vm.portal.operating_system.release"
+    #p portal.host(:controller).machine.operating_system.release
+    #p "host.vm.os.users"
+    #p portal.host(:controller).machine.operating_system.users.length
+    #p portal.host(:controller).machine.operating_system.users.first.name
+    #p portal.host(:controller).machine.operating_system.users.last.name
+    #p "host.vm.os.pm"
+    #p "  host.vm.os.pm.install"
+    #p portal.host(:controller).machine.operating_system.package_manager.install.length 
+    #p "  host.vm.os.pm.remove"
+    #p portal.host(:controller).machine.operating_system.package_manager.remove.length 
+    #p "host.vm.os.kernel"
+    #p "  host.vm.os.kernel.modules"
+    #p portal.host(:controller).machine.operating_system.kernel.modules.length
+    #p "host.vm.os.networks"
+    #p portal.host(:controller).machine.operating_system.networks.length
+    #p "host.vm.os.networks.devices"
+    #p portal.host(:controller).machine.operating_system.networks.first.devices.length 
+    #p portal.host(:controller).machine.operating_system.networks.first.devices.first.name
     p Marshal.dump(portal).unpack("H*")
   end
 end

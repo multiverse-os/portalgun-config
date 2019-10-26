@@ -2,7 +2,7 @@ module Portalgun
   class Portal 
     class OperatingSystem 
       class  Kernel 
-        attr :modules
+        attr_reader :modules
 
         def initialize
           @modules = Array.new
@@ -11,11 +11,6 @@ module Portalgun
         def modules=(modules)
           @modules += modules 
         end
-
-        def modules 
-          @modules 
-        end
-
       end
     end
   end
